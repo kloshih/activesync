@@ -1,0 +1,41 @@
+{
+  "name": "activesync",
+  "version": "0.1.0",
+  "description": "Class",
+  "main": "./lib/active.js",
+  "scripts": {
+    "test": "mocha",
+    "cypress:open": "cypress open"
+  },
+  "keywords": [
+    "node",
+    "flow",
+    "control",
+    "async",
+    "asynchronous"
+  ],
+  "dependencies": {
+    "begin": "*",
+    "eventemitter3": "^2.0.3",
+    "log": "*"
+  },
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-env": "^1.5.1",
+    "babel-preset-es2015": "^6.24.1",
+    "cypress": "^1.4.1",
+    "webpack": "^2.6.1"
+  },
+  "providers": {
+    "service": {
+      "test": "./lib/tools/test/index.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kloshih/active.git"
+  },
+  "author": "K. Lo Shih <kls@elysiumtechgroup.com>",
+  "license": "BSD"
+}
