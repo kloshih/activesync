@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Class",
   "main": "./lib/active.js",
+  "engines" : { "npm" : ">=8.0.0" },
   "scripts": {
     "test": "mocha",
     "cypress:open": "cypress open"
@@ -28,8 +29,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kloshih/active.git"
+    "url": "https://github.com/kloshih/activesync.git"
   },
-  "author": "K. Lo Shih <kls@elysiumtechgroup.com>",
+  "author": "K. Lo Shih <kloshih@gmail.com>",
   "license": "BSD"
 }
