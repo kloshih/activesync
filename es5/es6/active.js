@@ -3,7 +3,7 @@
 const EventEmitter = require('eventemitter3');
 const begin = require('begin');
 const kv = require('keyvalues');
-const Uri= require('./uri.js');
+const Uri= require('./uri.js.js');
 
 const log = require('log');
 
