@@ -1,9 +1,12 @@
 'use strict';
 
 const EventEmitter = require('eventemitter3');
-const Uri = require('./uri.js');
+const begin = require('begin');
+const kv = require('keyvalues');
+const Uri= require('./uri.js');
 
-let log = {debug:function() {}};
+const log = require('log');
+
 const kAllProps = Symbol('allProps');
 
 /**
@@ -21,11 +24,6 @@ const kAllProps = Symbol('allProps');
  */
 class Active extends EventEmitter {
 
-  /**
-   * Creates an active
-   * @param {object} config The object configuration
-   * @param {object} owner Owner of the active
-   */
   constructor(config, owner) {
     super();
     this.config = this.constructor.coerceConfig(config);
@@ -37,12 +35,12 @@ class Active extends EventEmitter {
       subactives: [],
       superactives: [],
     };
-    // log.debug("#bbl[%s] #wh[config #byl[%s]]", this, log.dump(this.config));
+    // log('info', "#bbl[%s] #wh[config #byl[%s]]", this, log.dump(this.config));
     // console.log("Creating " + this.toString());
   }
 
   toString() {
-    const meta = this._meta;
+    let meta = this._meta;
     if (!meta)
       return super.toString();
     return this.constructor.name + ':' + meta.iid + '(' + statusCodes[meta.status] + ')';
@@ -57,9 +55,9 @@ class Active extends EventEmitter {
    *--------------------------------------------------------------------------*/
 
   _configure() {
-    const config = this.config;
-    // log.debug("#bbl[active] #wh[config #byl[%s] for active #df[%s]]", log.dump(config), this);
-    const props = this.constructor.allProps;
+    let self = this, config = this.config;
+    // log('info', "#bbl[active] #wh[config #byl[%s] for active #df[%s]]", log.dump(config), this);
+    let props = this.constructor.allProps;
     for (let key in props) {
       let prop = props[key],
           req = prop.req,
@@ -67,19 +65,19 @@ class Active extends EventEmitter {
           type = coerceType(prop.type),
           subconfig = config[key];
 
-      log.debug("#bbl[%s] #wh[key #gr[%s] prop #byl[%s] req #bgr[%s] type #bgr[%s] (isActive? #df[%s]) subconfig #byl[%s]]", this, key, prop, req, type, isSubclass(type, Active), subconfig);
+      // log('info', "#bbl[%s] #wh[key #gr[%s] prop #byl[%s] req #bgr[%s] type #bgr[%s] (isActive? #df[%s]) subconfig #byl[%s]]", this, key, prop, req, type, isSubclass(type, Active), subconfig);
 
       /* If the type isn't a class and an Active subclass, then simply set the
        * key and be done with it. */
       if (subconfig == null || !isSubclass(type, Active)) {
-        var defType = _typeof(def), subType = _typeof(subconfig);
+        let defType = kv.typeof(def), subType = kv.typeof(subconfig);
 
         /* If we're dealing with an object config, then merge the value in with
          * the default values. */
         if (defType === 'object' && subType === 'object') {
           subconfig = config[key] = kv.merge({}, def, subconfig);
         }
-        log.debug("def #byl[%s] #bmg[%s] sub #byl[%s] #bmg[%s]", def, defType, subconfig, subType);
+        // log('info', "def #byl[%s] #bmg[%s] sub #byl[%s] #bmg[%s]", def, defType, subconfig, subType);
 
         this[key] = subconfig || null;
         continue;
@@ -88,9 +86,9 @@ class Active extends EventEmitter {
       /* If the subconfig for this key is not an object, then wrap it in an
        * object with the implicitConfigKey. */
       // subconfig = coerceConfig(type, subconfig, key);
-      subconfig = type.coerceConfig(subconfig);
-      // subconfig.$key = key;
-      // log.debug("#bbl[%s] #wh[req #df[%s] type #df[%s] subconfig #byl[%s]]", this, req, type, subconfig);
+//      subconfig = type.coerceConfig(subconfig);
+//      subconfig.$key = key;
+      // log('info', "#bbl[%s] #wh[req #df[%s] type #df[%s] subconfig #byl[%s]]", this, req, type, subconfig);
       switch (req) {
         case '?': case '1': case undefined:
           subconfig = type.coerceConfig(subconfig);
@@ -99,13 +97,13 @@ class Active extends EventEmitter {
           break;
         case '*': case '+':
           this[key] = {};
-          log.debug("#bbl[%s] #wh[key #gr[%s] processing req #gr[%s] subconfig #byl[%s]]", this, key, req, subconfig);
-          for (var subkey in subconfig) {
+          // log('info', "#bbl[%s] #wh[key #gr[%s] processing req #gr[%s] subconfig #byl[%s]]", this, key, req, subconfig);
+          for (let subkey in subconfig) {
             if (subkey.indexOf('$') === 0) continue;
-            // var subconf = coerceConfig(type, subconfig[subkey], subkey);
-            var subconf = type.coerceConfig(subconfig[subkey]);
+            // let subconf = coerceConfig(type, subconfig[subkey], subkey);
+            let subconf = type.coerceConfig(subconfig[subkey]);
             subconf.$key = subkey;
-            log.debug("subkey #byl[%s] conf #byl[%s]", subkey, subconf);
+            // log('info', "subkey #byl[%s] conf #byl[%s]", subkey, subconf);
             this[subkey] = this[key][subkey] = coerceProperty(type, subconf)
           }
           break;
@@ -113,24 +111,24 @@ class Active extends EventEmitter {
     }
 
     function coerceType(type) {
-      return _typeof(type) === 'function' ? type() : type
+      return kv.typeof(type) === 'function' ? type() : type
     }
 
-    // function coerceConfig(type, config, key) {
-    //   if (_typeof(config) !== 'object')
-    //     config = {name:config}
-    //   config.$key = key
-    //   return config;
-    // }
+//    function coerceConfig(type, config, key) {
+//      if (kv.typeof(config) !== 'object')
+//        config = {name:config}
+//      config.$key = key
+//      return config;
+//    }
 
     function coerceProperty(type, config) {
-      log.debug("coerceProperty() type=#gr[%s], config=#gr[%s]", type, config);
-      var value;
+      // log('info', "coerceProperty() type=#gr[%s], config=#gr[%s]", type, config);
+      let value;
       if (isSubclass(type, Active)) {
         value = type.provider(config, self)
         self.addSubactive(value)
       } else {
-        log.debug("coerceProperty() type=#gr[%s], config=#gr[%s]", type, config);
+        log('info', "coerceProperty() type=#gr[%s], config=#gr[%s]", type, config);
         value = config != null ? config : null
       }
       return value;
@@ -140,8 +138,8 @@ class Active extends EventEmitter {
   addSubactive(active) {
     if (!(active instanceof Active))
       throw new Error("Active required");
-    var meta = this._meta;
-    var actives = meta.subactives;
+    let meta = this._meta;
+    let actives = meta.subactives;
     if (actives.indexOf(active) < 0) {
       actives.push(active);
       active.addSuperactive(this);
@@ -158,9 +156,8 @@ class Active extends EventEmitter {
   removeSubactive(active) {
     if (!(active instanceof Active))
       throw new Error("Active required");
-    const meta = this._meta;
-    const actives = meta.subactives;
-    let index;
+    let meta = this._meta;
+    let actives = meta.subactives, index;
     if ((index = actives.indexOf(active)) >= 0) {
       actives.splice(index, 1);
       active.removeSuperactivity(this);
@@ -171,8 +168,8 @@ class Active extends EventEmitter {
   addSuperactive(active) {
     if (!(active instanceof Active))
       throw new Error("Active required");
-    const meta = this._meta;
-    const actives = meta.superactives;
+    let meta = this._meta;
+    let actives = meta.superactives;
     if (actives.indexOf(active) < 0) {
       actives.push(active);
       active.addSubactive(this);
@@ -195,9 +192,8 @@ class Active extends EventEmitter {
   removeSuperactive(active) {
     if (!(active instanceof Active))
       throw new Error("Active required");
-    const meta = this._meta;
-    const actives = meta.superactives;
-    let index;
+    let meta = this._meta;
+    let actives = meta.superactives, index;
     if ((index = actives.indexOf(active)) >= 0) {
       actives.splice(index, 1);
       active.removeSubactive(this);
@@ -212,10 +208,10 @@ class Active extends EventEmitter {
   dump() {
     const depth = arguments[0] || 1;
     const text = [];
-    // text.push(this.toString(), " #bbk[" + log.dump(this.config, {maxlen:200}) + "]");
-    const subs = this._meta.subactives;
+    text.push(this.toString(), " #bbk[" + log.dump(this.config, {maxlen:200}) + "]");
+    let subs = this._meta.subactives;
     for (let i = 0, ic = subs.length; i < ic; i++) {
-      const sub = subs[i];
+      let sub = subs[i];
       text.push('\n', ' '.repeat(depth*2));
       text.push(sub.dump(depth + 1));
     }
@@ -226,10 +222,6 @@ class Active extends EventEmitter {
    |                             IMPLEMENTATIONS                              |
    *--------------------------------------------------------------------------*/
 
-  static set log(val) {
-    log = val;
-  }
-  
   /** Describes the
    *
    *  @return A object describing the properties.
@@ -242,15 +234,15 @@ class Active extends EventEmitter {
 
   static get allProps() {
 //    if (!this[kAllProps]) {
-      let props = {}
+  let props = {}
       for (let type = this; type && type !== Object; type = superclass(type)) {
-        log.debug("type props #gr[%s] #byl[%s]", type, type.props);
-        props = _merge({}, type.props, props)
+        // log('info', "type props #gr[%s] #byl[%s]", type, type.props);
+        props = kv.merge({}, type.props, props)
       }
-      log.debug("#bbl[%s] #wh[calculated allProps #byl[%s]]", this, props);
+      // log('info', "#bbl[%s] #wh[calculated allProps #byl[%s]]", this, props);
 //      this[kAllProps] = props
 //    }
-    log.debug("#bbl[%s] #wh[allProps #byl[%s]]", this, this[kAllProps]);
+    // log('info', "#bbl[%s] #wh[allProps #byl[%s]]", this, this[kAllProps]);
 //    return this[kAllProps]
     return props;
   }
@@ -261,15 +253,15 @@ class Active extends EventEmitter {
    */
   static coerceConfig(config) {
     let coerced = {}, implicit;
-    if (_typeof(config) !== 'object')
+    if (kv.typeof(config) !== 'object')
       implicit = config, config = {}
     const props = this.allProps;
-    // log.debug("#bbl[%s] #wh[props #byl[%s] implicit #byl[%s]]", this, log.dump(this.allProps), implicit);
+    // log('info', "#bbl[%s] #wh[props #byl[%s] implicit #byl[%s]]", this, log.dump(this.allProps), implicit);
     for (let key in props) {
       let prop = props[key];
       coerced[key] = prop.implicit && implicit || config[key] || (key === 'name' && config.$key) || prop.default || null;
 
-      log.debug("#bbl[%s] #wh[prop #gr[%s] #byl[%s] implicit #gr[%s] value #gr[%s]]", this, key, prop, prop.implicit ? 'yes' : 'no', coerced[key]);
+      // log('info', "#bbl[%s] #wh[prop #gr[%s] #byl[%s] implicit #gr[%s] value #gr[%s]]", this, key, prop, prop.implicit ? 'yes' : 'no', coerced[key]);
 
       /* Special case certain typical config parameters */
       switch (key) {
@@ -282,9 +274,9 @@ class Active extends EventEmitter {
       }
 
     }
-    log.debug("#bbl[%s] #wh[coerced #byl[%s]]", this, coerced);
+    // log('info', "#bbl[%s] #wh[coerced #byl[%s]]", this, coerced);
     return coerced;
-    // config = _typeof(config) === 'object' ? config : {[this.implicitConfigKey()]:config}
+    // config = kv.typeof(config) === 'object' ? config : {[this.implicitConfigKey()]:config}
   }
 
   /** An array of implementation classes of this class. Each implementation is
@@ -303,8 +295,8 @@ class Active extends EventEmitter {
    *  @param  impl An implementation subclass of
    */
   static use(impl) {
-    log.debug("impl is a #bgr[%s] #gr[%s]", _typeof(impl), impl);
-    switch (_typeof(impl)) {
+    // log('info', "impl is a #bgr[%s] #gr[%s]", kv.typeof(impl), impl);
+    switch (kv.typeof(impl)) {
       case 'object':
         for (let key in impl) {
           this.use(impl[key]);
@@ -319,7 +311,7 @@ class Active extends EventEmitter {
       case 'class':
         break;
       default:
-        throw new Error("Unsupported impl: " + _typeof(impl));
+        throw new Error("Unsupported impl: " + kv.typeof(impl));
     }
 
     if (!isSubclass(impl, this))
@@ -329,7 +321,7 @@ class Active extends EventEmitter {
   }
 
   static unuse(impl) {
-    const index = this.providerImpls.indexOf(impl);
+    let index = this.providerImpls.indexOf(impl);
     ~index && this.providerImpls.splice(index, 1);
   }
 
@@ -343,12 +335,12 @@ class Active extends EventEmitter {
    */
   static provider(config, owner) {
     config = this.coerceConfig(config);
-    const providerImpls = this.providerImpls;
-    log.debug("#bbl[%s] #wh[provider for config #byl[%s] providerImpls #byl[%s]]", this, config, providerImpls);
-    const pick = { impl:this, priority:0 };
+    let providerImpls = this.providerImpls;
+    // log('info', "#bbl[%s] #wh[provider for config #byl[%s] providerImpls #byl[%s]]", this, config, providerImpls);
+    let pick = { impl:this, priority:0 };
     for (let i = 0, ic = providerImpls.length; i < ic; i++) {
-      const impl = providerImpls[i];
-      const info = impl.provides(config, this);
+      let impl = providerImpls[i];
+      let info = impl.provides(config, this);
       if (info && info.priority > pick.priority)
         pick = info, pick.impl || (pick.impl = impl);
     }
@@ -363,12 +355,12 @@ class Active extends EventEmitter {
     let shareKey = supportsShare && pick.impl.sharedProviderKey(config, owner);
     if (shareKey) {
       provider = pick.impl.sharedProviders.get(shareKey);
-      log.info("#bbl[%s] #wh[impl #df[%s] uses a share key #gr[%s] found provider #bgr[%s]]", this, pick.impl, shareKey, provider || '<none>');
+      log('info', "#bbl[%s] #wh[impl #df[%s] uses a share key #gr[%s] found provider #bgr[%s]]", this, pick.impl, shareKey, provider || '<none>');
       if (!provider) {
         provider = new pick.impl(config, null);
         pick.impl.sharedProviders.set(shareKey, provider)
         // console.log("log.dump ====> ", Object.keys(log));
-        // log.info("#bbl[%s] #wh[created provider #bgr[%s] set as share key #gr[%s] this is what was set #gr[%s] map #byl[%s]]", this, `provider`, shareKey, pick.impl.sharedProviders.get(shareKey), log.dump(pick.impl.sharedProviders));
+        log('info', "#bbl[%s] #wh[created provider #bgr[%s] set as share key #gr[%s] this is what was set #gr[%s] map #byl[%s]]", this, `provider`, shareKey, pick.impl.sharedProviders.get(shareKey), log.dump(pick.impl.sharedProviders));
       }
       provider.shared = true;
     } else {
@@ -394,7 +386,7 @@ class Active extends EventEmitter {
     let typeName = this.name,
         baseName = baseType.name;
     let name = typeName.replace(baseType, '').toLowerCase();
-    log.info("#bbl[%s] #wh[provider priority for typeName #df[%s] baseName #df[%s] name #df[%s] baseType #gr[%s] config #byl[%s]]", this, typeName, baseName, name, baseType, config);
+    log('info', "#bbl[%s] #wh[provider priority for typeName #df[%s] baseName #df[%s] name #df[%s] baseType #gr[%s] config #byl[%s]]", this, typeName, baseName, name, baseType, config);
     if (config.$key === name || config.type === name)
       return { impl:this, priority:1 };
     return null;
@@ -444,7 +436,7 @@ class Active extends EventEmitter {
 
   async attach() {
     const meta = this._meta;
-    log.debug("#bbl[%s] #wh[attach from #gr[%s]]", this, meta.status);
+    // log('info', "#bbl[%s] #wh[attach from #gr[%s]]", self, meta.status);
     switch (meta.status) {
       case 'attaching':
       case 'attached':
@@ -452,33 +444,32 @@ class Active extends EventEmitter {
       case 'started':
       case 'stopping':
       case 'stopped':
-        return;
+        return meta._attach || null;
       case 'detaching':
       case 'detached':
-        let last = meta.status;
-        try {
-          this.emit('status', meta.status = 'attaching');
-          await this._attach();
-          this.emit('status', meta.status = 'attached');
-          this.emit('attach');
-        } catch (error) {
-          this.emit('status', meta.status = last);
-          this.emit('error', error, 'attach');
-        }
-        break;
+        return meta._attach = (async () => {
+          try {
+            this.emit('status', meta.status = 'attaching', this);
+            await this._attach();
+            this.emit('status', meta.status = 'attached', this);
+            this.emit('attach', this);
+          } catch (err) {
+            this.emit('error', err, {command:'attach'});
+          } finally {
+            delete(meta._attach);
+          }
+        })();
     }
   }
 
   async _attach() {
-    const subactives = this._meta.subactives;
+    const self = this, meta = this._meta, config = this.config;
     this._configure();
-    for (let i = 0, ic = subactives.length; i < ic; i++) {
-      await subactives[i].detach();
-    }
+    await Promise.all(meta.subactives.map(async (act) => { await func(act) }));
   }
 
   async detach() {
-    const meta = this._meta;
+    const self = this, meta = this._meta;
     switch (meta.status) {
       case 'attaching':
       case 'attached':
@@ -486,56 +477,72 @@ class Active extends EventEmitter {
       case 'started':
       case 'stopping':
       case 'stopped':
-        let last = meta.status;
-        try {
-          await this.stop();
-          this.emit('status', meta.status = 'detaching');
-          await this._detach();
-          this.emit('status', meta.status = 'detached');
-          this.emit('detach');
-        } catch (error) {
-          this.emit('status', meta.status = last);
-          this.emit('error', error, 'detach');
-        }
+        meta._detach = (async () => {
+          try {
+            await this.stop();
+            await this._detach();
+            this.emit('status', meta.status = 'detached');
+            this.emit('detach');  
+          } catch (err) {
+            this.emit('error', err, {action:'detach'})
+            throw err;
+          } finally {
+            delete(meta._detach);
+          }
+        })();
         break;
       case 'detaching':
       case 'detached':
-        return;
+        return meta._detach;
+        // return meta._detach || self;
     }
   }
 
   async _detach() {
-    const subactives = this._meta.subactives;
-    for (let i = 0, ic = subactives.length; i < ic; i++) {
-      await subactives[i].detach();
-    }
+    const meta = this._meta;
+    await Promise.all(meta.subactives.map((act) => act.detach() ));
   }
 
   async start() {
-    const meta = this._meta;
+    const self = this, meta = this._meta;
     switch (meta.status) {
       case 'starting':
       case 'started':
-        return;
+        return meta._start || self;
       case 'attaching':
       case 'attached':
       case 'stopping':
       case 'stopped':
       case 'detaching':
       case 'detached':
-        let last = meta.status;
-        try {
-          await this.attach();
-          this.emit('status', meta.status = 'starting');
-          await this._start();
-          this.emit('status', meta.status = 'started');
-          this.emit('start');
-        } catch (error) {
-          if (meta.status == 'starting')
-            this.emit('status', meta.status = last);
-          this.emit('error', 'start');
-        }
-        break;
+        const last = meta.status;
+        return meta._start = begin().
+          then(meta._stop || self).
+          then(function() {
+            return self.attach();
+          }).
+          then(function() {
+            self.emit('status', meta.status = 'starting', self);
+            return self._start();
+          }).
+          then(function() {
+            delete(meta._start);
+            self.emit('status', meta.status = 'started', self);
+            self.emit('start', self);
+            return self;
+          }).
+          finally(function(err, res) {
+            if (err) {
+              delete(meta._start);
+              self.emit('error', err, 'start');
+//              if (meta.status !== last)
+//                self.emit(meta.status = last, self),
+//                self.emit('status', meta.status, self);
+            }
+//            delete(meta._start);
+            this(err, res);
+          }).
+        end();
     }
   }
 
@@ -547,10 +554,8 @@ class Active extends EventEmitter {
    *  @MARK:  -_start()
    */
   async _start() {
-    const subactives = this._meta.subactives;
-    for (let i = 0, ic = subactives.length; i < ic; i++) {
-      await subactives[i].start();
-    }
+    const meta = this._meta;
+    await Promise.all(meta.subactives.map((act) => act.start() ));
   }
 
   /** Attaches an active
@@ -561,30 +566,43 @@ class Active extends EventEmitter {
    *  @MARK:  -stop()
    */
   async stop() {
-    const meta = this._meta;
+    const self = this, meta = this._meta;
     switch (meta.status) {
       case 'attaching':
       case 'attached':
-        return;
+        return meta._attach || self;
       case 'starting':
       case 'started':
         const last = meta.status;
-        try {
-          this.emit('status', meta.status = 'stopping');
-          await this._stop();
-          this.emit('status', meta.status = 'attached');
-          this.emit('start');
-        } catch (error) {
-          if (meta.status == 'stopping')
-            this.emit('status', meta.status = last);
-          this.emit('error', 'stop');
-        }
-        break;
+        return meta._stop = begin().
+          then(meta._start || self).
+          then(function() {
+            self.emit('status', meta.status = 'stopping', self);
+            return self._stop();
+          }).
+          then(function() {
+            delete(meta._stop);
+            self.emit('status', meta.status = 'attached', self);
+            self.emit('stop', self);
+            return self;
+          }).
+          finally(function(err, res) {
+            if (err) {
+              delete(meta._stop);
+              self.emit('error', err, 'stop');
+//              if (meta.status !== last)
+//                self.emit(meta.status = last, self),
+//                self.emit('status', meta.status, self);
+            }
+//            delete(meta._stop);
+            this(err, res);
+          }).
+        end();
       case 'stopping':
       case 'stopped':
       case 'detaching':
       case 'detached':
-        return;
+        return meta._stop || self;
     }
   }
 
@@ -596,10 +614,8 @@ class Active extends EventEmitter {
    *  @MARK:  -_stop()
    */
   async _stop() {
-    const subactives = this._meta.subactives;
-    for (let i = 0, ic = subactives.length; i < ic; i++) {
-      await subactives[i].stop();
-    }
+    const meta = this._meta;
+    await Promise.all(meta.subactives.map((active) => active.stop() ));
   }
 
   async reattach() {
@@ -610,11 +626,12 @@ class Active extends EventEmitter {
   async restart() {
     await this.stop();
     await this.start();
+
   }
 
   boundMethod(name) {
-    const meta = this._meta;
-    let method = meta.boundMethods[name];
+    const self = this, meta = this._meta;
+    const method = meta.boundMethods[name];
     if (!method) {
       if (typeof(this[name]) !== 'function')
         throw new Error(this.constructor.name + " does not implement " + name + "()");
@@ -629,11 +646,6 @@ class Active extends EventEmitter {
     return this.__nextIid = (this.__nextIid || 0) + 1;
   }
 
-  /**
-   * Calculates the status counts for the array of actives
-   * @param {array(Active)} actives The active instances
-   * @return {total, attach, start, count, detach}
-   */
   static statusCounts(actives) {
     const counts = { total:0, attach:0, start:0, stop:0, detach:0 };
     for (let i = 0, ic = actives.length; i < ic; i++) {
@@ -672,7 +684,7 @@ function defaultOwnerKey(impl, config, owner) {
 
 
 
-//var statuses = {
+//let statuses = {
 //  attaching:  { mask:0x3, code:'a', trans:true,  attach:true,
 //                next:{attach:['attached','detached']} },
 //  attached:   { mask:0x2, code:'X', trans:false, attach:true,
@@ -690,7 +702,7 @@ function defaultOwnerKey(impl, config, owner) {
 //  detached:   { mask:0x0, code:'D', trans:false, detach:true,
 //                next:['attaching'] },
 //};
-//for (var key in statuses)
+//for (let key in statuses)
 //  statuses[statuses[key]] = key;
 
 const statuses = {
@@ -705,11 +717,11 @@ const statuses = {
 };
 Object.defineProperty(Active, 'statuses', {value:statuses});
 
-// const statusNames = new Map();
-// for (let key in statuses) {
-//   statusNames[statuses[key]] = key;
-// }
-// Object.defineProperty(Active, 'statuses', {value:statuses});
+const statusNames = new Map();
+for (let key in statuses) {
+  statusNames[statuses[key]] = key;
+}
+Object.defineProperty(Active, 'statuses', {value:statuses});
 
 
 
@@ -729,67 +741,7 @@ const statusCodes = {
 Object.defineProperty(Active, 'statusNames', {value:statusNames});
 Object.defineProperty(Active, 'statusCodes', {value:statusCodes});
 
+
+
 module.exports = Active;
 Active.EventEmitter = EventEmitter;
-Active.Uri = Uri;
-
-
-/**
- * 
- * @param {*} value 
- */
-function _typeof(value) {
-  let type = typeof(value), name;
-  if (type === 'object') {
-    if (value == null) return 'null';
-    if (Array.isArray(value)) return 'array';
-    if (value.getTime && value.setTime) return 'date';
-    if (value.class !== undefined) return 'object';
-    if (value.constructor && (name = value.constructor.name))
-      return value.constructor.name.toLowerCase();
-  } else if (type === 'function') {
-    if (value.className !== undefined && value.methodName !== undefined) return 'class';
-    if (funcToString.call(value).indexOf('class') === 0) return 'class';
-    if (value.compile && value.exec) return 'regexp';
-  }
-  return type;
-}
-const funcToString = Function.prototype.toString;
-
-/**
- * 
- * @param {object} target The target of the merge
- * @param  {...any} args Additional arguments
- */
-function _merge(target, ...args) {
-  target || (target = {});
-  let depth = 0;
-  for (let i = 0, ic = args.length; i < ic; i++) {
-    if (_typeof(args[i]) === 'object')
-      merge(target, args[i]);
-  }
-  return target;
-  function merge(a, b) {
-    for (let k in b) {
-      if (!b.hasOwnProperty(k)) continue;
-      let bv = b[k];
-      if (bv == null) {
-        delete(a[k]);
-      } else {
-        const av = a[k];
-        const at = _typeof(av), bt = _typeof(bv);
-        if (at === 'object' && at === 'object') {
-          try {
-            if (depth++ == 0)
-              av = a[k] = _clone(av, true);
-            merge(av, bv);
-          } finally {
-            depth--;
-          }
-        } else {
-          a[k] = bv;
-        }
-      }
-    }
-  }
-}

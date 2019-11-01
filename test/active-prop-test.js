@@ -8,9 +8,7 @@
 'use strict';
 
 var assert = require('assert');
-
-var begin = require('begin');
-var log = require('log');
+var log = require('pino')();
 
 var Active = require('../lib/active.js');
 
@@ -26,11 +24,11 @@ describe("Active prop", function() {
         }
       }
       static sharedProviderKey(config) {
-        log('info', "config: #byl[%s]", config);
+        log.info("config: #byl[%s]", config);
         var url = config.url || config.name;
-        var match = url.match(/^([\w\+-]*)/);
+        var match = url.toString().match(/^([\w\+-]*)/);
         var shareKey = match[1];
-        log('info', "Share key: #byl[%s]", shareKey);
+        log.info("Share key: #byl[%s]", shareKey);
         return shareKey;
       }
     }
@@ -45,25 +43,16 @@ describe("Active prop", function() {
     }
     log.trace(Server)
     
-    it.only("should be able to create using share key", function(done) {
-      begin().
-        then(function() {
-          this.server1 = new Server({
-            connection: 'httpd://0.0.0.0:3450/alpha',
-          });
-          return this.server1.start();
-        }).
-        then(function() {
-          this.server2 = new Server({
-            connection: 'httpd://0.0.0.0:3450/beta',
-          });
-          return this.server2.start();
-        }).
-        then(function() {
-          log('info', "^^#bgr[server1]\n%s\n#bgr[server2]\n%s", this.server1.dump(), this.server2.dump());
-          return null
-        }).
-      end(done)
+    it("should be able to create using share key", async function() {
+      this.server1 = new Server({
+        connection: 'httpd://0.0.0.0:3450/alpha',
+      });
+      await this.server1.start();
+      this.server2 = new Server({
+        connection: 'httpd://0.0.0.0:3450/beta',
+      });
+      await this.server2.start();
+      log.info("^^#bgr[server1]\n%s\n#bgr[server2]\n%s", this.server1.dump(), this.server2.dump());
     });
 
     
@@ -134,7 +123,7 @@ describe("Active prop", function() {
     Staff.use(Manager);
     
     
-    it("should work", function(done) {
+    it("should work", async function() {
       var group = new Group({
         name: 'Acme Widgets',
         teams: {
@@ -156,14 +145,8 @@ describe("Active prop", function() {
           },
         },
       });
-      begin().
-        then(function() {
-          return group.start()
-        }).
-        thenSync(function() {
-          log('info', "Group:\n#byl[%s]", group.dump());
-        }).
-      end(done)
+      await group.start()
+      log.info("Group:\n#byl[%s]", group.dump());
     });
     
   });

@@ -1,0 +1,31 @@
+
+
+[sdfsdf]
+
+name: model
+version: 1.0.0
+
+#
+#
+services:
+  
+  # This is the 
+  source:
+    name: Test Server
+    connectors:
+      mongo: mongodb://localhost/db
+      stomp: stomp://localhost/
+    shouldCreate: yes
+
+types:
+  
+  "Status":
+    props:
+      id:         {type:number}
+      name:       {type:string},
+
+  
+    
+    
+  
+

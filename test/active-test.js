@@ -8,10 +8,7 @@
 'use strict';
 
 var assert = require('assert');
-
-var Class = require('classr');
-var begin = require('begin');
-var log = require('log');
+var log = require('pino')();
 
 var Active = require('../lib/active.js');
 // var log = active.log();
@@ -26,57 +23,29 @@ describe("Active", function() {
         super();
         this.indent = indent;
       }
-      _attach() {
-        var self = this, sup = super._attach;
-        return begin().
-          thenSync(function() {
-            log('info', "%s#mg[\\] #gr[%s] _attach", self.indent, self);
-          }).
-          then(function() { return sup.call(self) }).
-          thenSync(function() {
-            if (self.throws == '_attach') throw new Error("ERROR");
-            log('info', "%s#mg[/] #gr[%s] _attach", self.indent, self);
-          }).
-        end();
+      async _attach() {
+        log.info("%s#mg[\\] #gr[%s] _attach", self.indent, self);
+        await super._attach();
+        if (self.throws == '_attach') throw new Error("ERROR");
+        log.info("%s#mg[/] #gr[%s] _attach", self.indent, self);
       }
-      _detach() {
-        var self = this, sup = super._detach;
-        return begin().
-          thenSync(function() {
-            log('info', "%s#mg[\\] #gr[%s] _detach", self.indent, self);
-          }).
-          then(function() { return sup.call(self) }).
-          thenSync(function() {
-            if (self.throws == '_detach') throw new Error("ERROR");
-            log('info', "%s#mg[/] #gr[%s] _detach", self.indent, self);
-          }).
-        end();
+      async _detach() {
+        log.info("%s#mg[\\] #gr[%s] _detach", self.indent, self);
+        await super._detach();
+        if (self.throws == '_detach') throw new Error("ERROR");
+        log.info("%s#mg[/] #gr[%s] _detach", self.indent, self);
       }
-      _start() {
-        var self = this, sup = super._start;
-        return begin().
-          thenSync(function() {
-            log('info', "%s#mg[\\] #gr[%s] _start", self.indent, self);
-          }).
-          then(function() { return sup.call(self) }).
-          thenSync(function() {
-            if (self.throws == '_start') throw new Error("ERROR");
-            log('info', "%s#mg[/] #gr[%s] _start", self.indent, self);
-          }).
-        end();
+      async _start() {
+        log.info("%s#mg[\\] #gr[%s] _start", self.indent, self);
+        await super._start();
+        if (self.throws == '_start') throw new Error("ERROR");
+        log.info("%s#mg[/] #gr[%s] _start", self.indent, self);
       }
-      _stop() {
-        var self = this, sup = super._stop;
-        return begin().
-          thenSync(function() {
-            log('info', "%s#mg[\\] #gr[%s] _stop", self.indent, self);
-          }).
-          then(function() { return sup.call(self) }).
-          thenSync(function() {
-            if (self.throws == '_stop') throw new Error("ERROR");
-            log('info', "%s#mg[/] #gr[%s] _stop", self.indent, self);
-          }).
-        end();
+      async _stop() {
+        log.info("%s#mg[\\] #gr[%s] _stop", self.indent, self);
+        await super._stop();
+        if (self.throws == '_stop') throw new Error("ERROR");
+        log.info("%s#mg[/] #gr[%s] _stop", self.indent, self);
       }
     }
     
@@ -84,7 +53,7 @@ describe("Active", function() {
     class B extends T {}
     class C extends T {}
         
-    var a1, b1, b2, c1, c2, c3, c4;
+    let a1, b1, b2, c1, c2, c3, c4;
     
     beforeEach(function() {
       console.log("Creating A");
@@ -109,99 +78,76 @@ describe("Active", function() {
       b2.addSubactive(c4);
     });
 
-    it("should handle start-stop-detach-attach-start-detach", function(done) {
-      begin().
-        then(function() {
-          [a1, b1, b2, c1, c2, c3, c4].forEach(function(a) {
-            a.on('status', report);
-          });
-          function report(event, active) {
-            log('info', "%s#bmg[%s] #yl[%s]", active.indent, event, active);
-          }
-          
-          begin().
-            then(function() {
-              log('info', "#bcy[Starting]");
-              return a1.start();
-            }).
-            then(function() {
-              log('info', "#bcy[Stopping]");
-              return a1.stop();
-            }).
-            then(function() {
-              log('info', "#bcy[Detaching]");
-              return a1.detach();
-            }).
-            then(function() {
-              log('info', "#bcy[Attaching]");
-              return a1.attach();
-            }).
-            then(function() {
-              log('info', "#bcy[Starting]");
-              return a1.start();
-            }).
-            then(function() {
-              log('info', "#bcy[Detaching]");
-              return a1.detach();
-            }).
-          end(done);
-        }).
-      end(done);
+    it("should handle start-stop-detach-attach-start-detach", async function() {
+      [a1, b1, b2, c1, c2, c3, c4].forEach(function(a) {
+        a.on('status', report.bind(a));
+      });
+      function report(event) {
+        log.info("%s#bmg[%s] #yl[%s]", this.indent, event, this);
+      }
+
+      log.info("#bcy[Starting]");
+      await a1.start();
+      log.info("#bcy[Stopping]");
+      await a1.stop();
+      log.info("#bcy[Detaching]");
+      await a1.detach();
+      log.info("#bcy[Attaching]");
+      await a1.attach();
+      log.info("#bcy[Starting]");
+      await a1.start();
+      log.info("#bcy[Detaching]");
+      await a1.detach();
     });
     
-    it("should be able to be interrupted", function(done) {
-      begin().
-        then(function() {
-          [a1, b1, b2, c1, c2, c3, c4].forEach(function(a) {
-            a.on('status', reportStatus);
-            a.on('error', reportError.bind(null, a));
-          });
-          function reportStatus(event, active) {
-            log('info', "%s#bmg[%s] #yl[%s]", active.indent, event, active);
-          }
-          function reportError(active, error, action) {
-            log('info', "%s#rd[error] #yl[%s] #wh[%s] #byl[%s]", active.indent, active, action, error);
-          }
+    it("should be able to be interrupted", async function() {
+      [a1, b1, b2, c1, c2, c3, c4].forEach(function(a) {
+        a.on('status', reportStatus.bind(a));
+        a.on('error', reportError.bind(a));
+      });
+      function reportStatus(event) {
+        log.info("%s#bmg[%s] #yl[%s]", this.indent, event, this);
+      }
+      function reportError(error, action) {
+        log.info("%s#rd[error] #yl[%s] #wh[%s] #byl[%s]", this.indent, this, action, error);
+      }
 
-          log('info', "^#bmg[M1] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
-          
-          c2.throws = '_start';
-          log('info', "^#bmg[START with c2 throws on _start()]");
-          return a1.start();
-        }).
-        finally(function(err) {
-          if (err)
-            log('info', "^^#byl[%s]", err.stack);
-          log('info', "^#bmg[M2] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
-          
-          log('info', "^#bmg[DETACH]");
-          delete(c2.throws);
-          return a1.detach();
-        }).
-        finally(function(err) {
-          if (err)
-            log('info', "^^#byl[%s]", err.stack);
-          log('info', "^#bmg[M3] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
-          
-          log('info', "^#bmg[START]");
-          return a1.start();
-        }).
-        finally(function(err) {
-          if (err)
-            log('info', "^^#byl[%s]", err.stack);
-          log('info', "^#bmg[M4] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
-          
-          log('info', "^#bmg[STOP]");
-          return a1.stop();
-        }).
-        finally(function(err) {
-          if (err)
-            log('info', "^^#byl[%s]", err.stack);
-          log('info', "^#bmg[M5] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
-          // log('info', "^^%s", a1.dump());
-          return null;
-        }).
-      end(done);
+      log.info("^#bmg[M1] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+      
+      c2.throws = '_start';
+      log.info("^#bmg[START with c2 throws on _start()]");
+      try {
+        await a1.start();
+
+      } catch (error) {
+        log.info("^^#byl[%s]", err.stack);
+
+      } finally {
+        log.info("^#bmg[M2] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+      
+        log.info("^#bmg[DETACH]");
+        delete(c2.throws);
+        try {
+          await a1.detach();
+        } catch (error) {
+          log.info("^^#byl[%s]", err.stack);
+        } finally {
+          log.info("^#bmg[M4] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+      
+          try {
+            log.info("^#bmg[STOP]");
+            await a1.stop();
+          } catch (error) {
+            log.info("^^#byl[%s]", err.stack);
+          } finally {
+            log.info("^#bmg[M4] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+      
+            log.info("^#bmg[STOP]");
+            return a1.stop();
+  
+          }
+        }
+      }
     });
     
   });
