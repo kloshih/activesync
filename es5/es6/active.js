@@ -70,12 +70,12 @@ class Active extends EventEmitter {
       /* If the type isn't a class and an Active subclass, then simply set the
        * key and be done with it. */
       if (subconfig == null || !isSubclass(type, Active)) {
-        let defType = kv.typeof(def), subType = kv.typeof(subconfig);
+        let defType = _typeof(def), subType = _typeof(subconfig);
 
         /* If we're dealing with an object config, then merge the value in with
          * the default values. */
         if (defType === 'object' && subType === 'object') {
-          subconfig = config[key] = kv.merge({}, def, subconfig);
+          subconfig = config[key] = _merge({}, def, subconfig);
         }
         // log('info', "def #byl[%s] #bmg[%s] sub #byl[%s] #bmg[%s]", def, defType, subconfig, subType);
 
@@ -111,11 +111,11 @@ class Active extends EventEmitter {
     }
 
     function coerceType(type) {
-      return kv.typeof(type) === 'function' ? type() : type
+      return _typeof(type) === 'function' ? type() : type
     }
 
 //    function coerceConfig(type, config, key) {
-//      if (kv.typeof(config) !== 'object')
+//      if (_typeof(config) !== 'object')
 //        config = {name:config}
 //      config.$key = key
 //      return config;
@@ -237,7 +237,7 @@ class Active extends EventEmitter {
   let props = {}
       for (let type = this; type && type !== Object; type = superclass(type)) {
         // log('info', "type props #gr[%s] #byl[%s]", type, type.props);
-        props = kv.merge({}, type.props, props)
+        props = _merge({}, type.props, props)
       }
       // log('info', "#bbl[%s] #wh[calculated allProps #byl[%s]]", this, props);
 //      this[kAllProps] = props
@@ -253,7 +253,7 @@ class Active extends EventEmitter {
    */
   static coerceConfig(config) {
     let coerced = {}, implicit;
-    if (kv.typeof(config) !== 'object')
+    if (_typeof(config) !== 'object')
       implicit = config, config = {}
     const props = this.allProps;
     // log('info', "#bbl[%s] #wh[props #byl[%s] implicit #byl[%s]]", this, log.dump(this.allProps), implicit);
@@ -267,7 +267,7 @@ class Active extends EventEmitter {
       switch (key) {
         case 'uri': case 'url':
           let uri = coerced[key] = Uri.coerce(coerced[key]);
-          kv.merge(coerced, uri.query);
+          _merge(coerced, uri.query);
           if (!coerced.name)
             coerced.name = uri.scheme;
           break;
@@ -276,7 +276,7 @@ class Active extends EventEmitter {
     }
     // log('info', "#bbl[%s] #wh[coerced #byl[%s]]", this, coerced);
     return coerced;
-    // config = kv.typeof(config) === 'object' ? config : {[this.implicitConfigKey()]:config}
+    // config = _typeof(config) === 'object' ? config : {[this.implicitConfigKey()]:config}
   }
 
   /** An array of implementation classes of this class. Each implementation is
@@ -295,8 +295,8 @@ class Active extends EventEmitter {
    *  @param  impl An implementation subclass of
    */
   static use(impl) {
-    // log('info', "impl is a #bgr[%s] #gr[%s]", kv.typeof(impl), impl);
-    switch (kv.typeof(impl)) {
+    // log('info', "impl is a #bgr[%s] #gr[%s]", _typeof(impl), impl);
+    switch (_typeof(impl)) {
       case 'object':
         for (let key in impl) {
           this.use(impl[key]);
@@ -311,7 +311,7 @@ class Active extends EventEmitter {
       case 'class':
         break;
       default:
-        throw new Error("Unsupported impl: " + kv.typeof(impl));
+        throw new Error("Unsupported impl: " + _typeof(impl));
     }
 
     if (!isSubclass(impl, this))
@@ -345,7 +345,7 @@ class Active extends EventEmitter {
         pick = info, pick.impl || (pick.impl = impl);
     }
     if (pick.opts)
-      kv.merge(config, pick.opts);
+      _merge(config, pick.opts);
 
     /* Create the provider. If the implementation uses a share key, attempt to
      * find an existing provider with that name. If it exists, then use it.
