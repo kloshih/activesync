@@ -8,10 +8,9 @@
 'use strict';
 
 var assert = require('assert');
-var log = require('pino')();
+// var log = require('pino')();
 
 var Active = require('../lib/active.js');
-// var log = active.log();
 
 describe("Active", function() {
 
@@ -24,28 +23,28 @@ describe("Active", function() {
         this.indent = indent;
       }
       async _attach() {
-        log.info("%s#mg[\\] #gr[%s] _attach", self.indent, self);
+        // log.info("%s#mg[\\] #gr[%s] _attach", this.indent, this);
         await super._attach();
-        if (self.throws == '_attach') throw new Error("ERROR");
-        log.info("%s#mg[/] #gr[%s] _attach", self.indent, self);
+        if (this.throws == '_attach') throw new Error("ERROR");
+        // log.info("%s#mg[/] #gr[%s] _attach", this.indent, this);
       }
       async _detach() {
-        log.info("%s#mg[\\] #gr[%s] _detach", self.indent, self);
+        // log.info("%s#mg[\\] #gr[%s] _detach", this.indent, this);
         await super._detach();
-        if (self.throws == '_detach') throw new Error("ERROR");
-        log.info("%s#mg[/] #gr[%s] _detach", self.indent, self);
+        if (this.throws == '_detach') throw new Error("ERROR");
+        // log.info("%s#mg[/] #gr[%s] _detach", this.indent, this);
       }
       async _start() {
-        log.info("%s#mg[\\] #gr[%s] _start", self.indent, self);
+        // log.info("%s#mg[\\] #gr[%s] _start", this.indent, this);
         await super._start();
-        if (self.throws == '_start') throw new Error("ERROR");
-        log.info("%s#mg[/] #gr[%s] _start", self.indent, self);
+        if (this.throws == '_start') throw new Error("ERROR");
+        // log.info("%s#mg[/] #gr[%s] _start", this.indent, this);
       }
       async _stop() {
-        log.info("%s#mg[\\] #gr[%s] _stop", self.indent, self);
+        // log.info("%s#mg[\\] #gr[%s] _stop", this.indent, this);
         await super._stop();
-        if (self.throws == '_stop') throw new Error("ERROR");
-        log.info("%s#mg[/] #gr[%s] _stop", self.indent, self);
+        if (this.throws == '_stop') throw new Error("ERROR");
+        // log.info("%s#mg[/] #gr[%s] _stop", this.indent, this);
       }
     }
     
@@ -83,20 +82,20 @@ describe("Active", function() {
         a.on('status', report.bind(a));
       });
       function report(event) {
-        log.info("%s#bmg[%s] #yl[%s]", this.indent, event, this);
+        // log.info("%s#bmg[%s] #yl[%s]", this.indent, event, this);
       }
 
-      log.info("#bcy[Starting]");
+      // log.info("#bcy[Starting]");
       await a1.start();
-      log.info("#bcy[Stopping]");
+      // log.info("#bcy[Stopping]");
       await a1.stop();
-      log.info("#bcy[Detaching]");
+      // log.info("#bcy[Detaching]");
       await a1.detach();
-      log.info("#bcy[Attaching]");
+      // log.info("#bcy[Attaching]");
       await a1.attach();
-      log.info("#bcy[Starting]");
+      // log.info("#bcy[Starting]");
       await a1.start();
-      log.info("#bcy[Detaching]");
+      // log.info("#bcy[Detaching]");
       await a1.detach();
     });
     
@@ -106,43 +105,43 @@ describe("Active", function() {
         a.on('error', reportError.bind(a));
       });
       function reportStatus(event) {
-        log.info("%s#bmg[%s] #yl[%s]", this.indent, event, this);
+        // log.info("%s#bmg[%s] #yl[%s]", this.indent, event, this);
       }
       function reportError(error, action) {
-        log.info("%s#rd[error] #yl[%s] #wh[%s] #byl[%s]", this.indent, this, action, error);
+        // log.info("%s#rd[error] #yl[%s] #wh[%s] #byl[%s]", this.indent, this, action, error);
       }
 
-      log.info("^#bmg[M1] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+      // log.info("^#bmg[M1] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
       
       c2.throws = '_start';
-      log.info("^#bmg[START with c2 throws on _start()]");
+      // log.info("^#bmg[START with c2 throws on _start()]");
       try {
         await a1.start();
 
       } catch (error) {
-        log.info("^^#byl[%s]", err.stack);
+        // log.info("^^#byl[%s]", err.stack);
 
       } finally {
-        log.info("^#bmg[M2] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+        // log.info("^#bmg[M2] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
       
-        log.info("^#bmg[DETACH]");
+        // log.info("^#bmg[DETACH]");
         delete(c2.throws);
         try {
           await a1.detach();
         } catch (error) {
-          log.info("^^#byl[%s]", err.stack);
+          // log.info("^^#byl[%s]", err.stack);
         } finally {
-          log.info("^#bmg[M4] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+          // log.info("^#bmg[M4] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
       
           try {
-            log.info("^#bmg[STOP]");
+            // log.info("^#bmg[STOP]");
             await a1.stop();
           } catch (error) {
-            log.info("^^#byl[%s]", err.stack);
+            // log.info("^^#byl[%s]", err.stack);
           } finally {
-            log.info("^#bmg[M4] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
+            // log.info("^#bmg[M4] #bcy[A #df[%s]  B #df[%s] #df[%s]  C #df[%s] #df[%s] #df[%s] #df[%s]]", a1, b1, b2, c1, c2, c3, c4);
       
-            log.info("^#bmg[STOP]");
+            // log.info("^#bmg[STOP]");
             return a1.stop();
   
           }

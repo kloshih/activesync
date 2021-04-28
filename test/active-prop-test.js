@@ -8,7 +8,7 @@
 'use strict';
 
 var assert = require('assert');
-var log = require('pino')();
+// var log = require('pino')();
 
 var Active = require('../lib/active.js');
 
@@ -24,15 +24,15 @@ describe("Active prop", function() {
         }
       }
       static sharedProviderKey(config) {
-        log.info("config: #byl[%s]", config);
+        // log.info("config: #byl[%s]", config);
         var url = config.url || config.name;
         var match = url.toString().match(/^([\w\+-]*)/);
         var shareKey = match[1];
-        log.info("Share key: #byl[%s]", shareKey);
+        // log.info("Share key: #byl[%s]", shareKey);
         return shareKey;
       }
     }
-    log.trace(Connection);
+    // log.trace(Connection);
     
     class Server extends Active {
       static get props() {
@@ -41,7 +41,7 @@ describe("Active prop", function() {
         }
       }
     }
-    log.trace(Server)
+    // log.trace(Server)
     
     it("should be able to create using share key", async function() {
       this.server1 = new Server({
@@ -52,7 +52,7 @@ describe("Active prop", function() {
         connection: 'httpd://0.0.0.0:3450/beta',
       });
       await this.server2.start();
-      log.info("^^#bgr[server1]\n%s\n#bgr[server2]\n%s", this.server1.dump(), this.server2.dump());
+      // log.info("^^#bgr[server1]\n%s\n#bgr[server2]\n%s", this.server1.dump(), this.server2.dump());
     });
 
     
@@ -146,7 +146,7 @@ describe("Active prop", function() {
         },
       });
       await group.start()
-      log.info("Group:\n#byl[%s]", group.dump());
+      // log.info("Group:\n#byl[%s]", group.dump());
     });
     
   });

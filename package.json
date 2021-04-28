@@ -1,14 +1,11 @@
 {
   "name": "activesync",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Class",
   "main": "./lib/active.js",
-  "engines": {
-    "npm": ">=8.0.0"
-  },
+  "engines": {},
   "scripts": {
-    "test": "mocha",
-    "cypress:open": "cypress open"
+    "test": "mocha"
   },
   "keywords": [
     "node",
@@ -18,17 +15,10 @@
     "asynchronous"
   ],
   "dependencies": {
-    "eventemitter3": "^2.0.3",
-    "pino": "^5.13.5",
-    "pino-pretty": "^3.2.2"
+    "eventemitter3": "^4.0.7"
   },
   "devDependencies": {
-    "babel-core": "^6.24.1",
-    "babel-loader": "^7.0.0",
-    "babel-preset-env": "^1.5.1",
-    "babel-preset-es2015": "^6.24.1",
-    "cypress": "^1.4.1",
-    "webpack": "^2.6.1"
+    "mocha": "^8.3.2"
   },
   "repository": {
     "type": "git",
