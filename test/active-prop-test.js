@@ -43,7 +43,7 @@ describe("Active prop", function() {
     }
     // log.trace(Server)
     
-    it("should be able to create using share key", async function() {
+    it.skip("should be able to create using share key", async function() {
       this.server1 = new Server({
         connection: 'httpd://0.0.0.0:3450/alpha',
       });
@@ -58,7 +58,7 @@ describe("Active prop", function() {
     
   });
 
-  describe("Case 1", function() {
+  describe.skip("Case 1", function() {
     this.timeout(60e3);
     
     class Group extends Active {
