@@ -39,6 +39,10 @@ class Example extends Active {
 }
 ```
 
+## Lifecycle Management 
+
+Actives provides the ability to 
+
 
 
 ## Using Configuration
